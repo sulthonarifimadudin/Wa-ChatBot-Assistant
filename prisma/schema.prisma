@@ -1,0 +1,158 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+// User — each WhatsApp number gets isolated data
+// ─────────────────────────────────────────────
+model User {
+  id              String          @id @default(uuid())
+  whatsappNumber  String          @unique
+  displayName     String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  chatMessages    ChatMessage[]
+  memories        Memory[]
+  reminders       Reminder[]
+  notes           Note[]
+  toolExecutions  ToolExecution[]
+}
+
+// ─────────────────────────────────────────────
+// ChatMessage — raw conversation history
+// ─────────────────────────────────────────────
+model ChatMessage {
+  id          String      @id @default(uuid())
+  userId      String
+  role        Role
+  content     String
+  messageType MessageType @default(TEXT)
+  createdAt   DateTime    @default(now())
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attachments Attachment[]
+
+  @@index([userId, createdAt])
+}
+
+// ─────────────────────────────────────────────
+// Memory — summarized long-term knowledge
+// ─────────────────────────────────────────────
+model Memory {
+  id         String   @id @default(uuid())
+  userId     String
+  summary    String
+  importance Int      @default(5) // 1 = low, 10 = critical
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ─────────────────────────────────────────────
+// Reminder — scheduled notifications
+// ─────────────────────────────────────────────
+model Reminder {
+  id           String         @id @default(uuid())
+  userId       String
+  title        String
+  message      String?
+  reminderTime DateTime
+  recurrence   Recurrence     @default(NONE)
+  status       ReminderStatus @default(PENDING)
+  createdAt    DateTime       @default(now())
+
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status, reminderTime])
+}
+
+// ─────────────────────────────────────────────
+// Note — user-saved information
+// ─────────────────────────────────────────────
+model Note {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String
+  content   String
+  tags      String[] @default([])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ─────────────────────────────────────────────
+// ToolExecution — audit log of every tool call
+// ─────────────────────────────────────────────
+model ToolExecution {
+  id            String   @id @default(uuid())
+  userId        String
+  toolName      String
+  input         Json
+  output        Json?
+  status        String   @default("pending") // pending, success, error
+  executionTime Int?     // milliseconds
+  createdAt     DateTime @default(now())
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ─────────────────────────────────────────────
+// Attachment — files linked to chat messages
+// ─────────────────────────────────────────────
+model Attachment {
+  id            String      @id @default(uuid())
+  chatMessageId String
+  fileType      String
+  fileName      String?
+  mimeType      String?
+  filePath      String
+  createdAt     DateTime    @default(now())
+
+  chatMessage   ChatMessage @relation(fields: [chatMessageId], references: [id], onDelete: Cascade)
+}
+
+// ─────────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────────
+enum Role {
+  USER
+  ASSISTANT
+  SYSTEM
+  TOOL
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  VOICE
+  PDF
+  DOCUMENT
+}
+
+enum Recurrence {
+  NONE
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+enum ReminderStatus {
+  PENDING
+  SENT
+  CANCELLED
+}
