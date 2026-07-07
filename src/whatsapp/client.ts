@@ -1,6 +1,7 @@
 import makeWASocket, {
   DisconnectReason,
   useMultiFileAuthState,
+  fetchLatestBaileysVersion,
   type WASocket,
   type BaileysEventMap,
   makeCacheableSignalKeyStore,
@@ -40,8 +41,11 @@ export async function initWhatsAppClient(
   const authDir = path.resolve('./auth', env.WA_SESSION_NAME);
 
   const { state, saveCreds } = await useMultiFileAuthState(authDir);
+  const { version, isLatest } = await fetchLatestBaileysVersion();
+  log.info({ version, isLatest }, 'Using WA version');
 
   const socket = makeWASocket({
+    version,
     auth: {
       creds: state.creds,
       keys: makeCacheableSignalKeyStore(state.keys, log as any),
