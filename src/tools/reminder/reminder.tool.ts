@@ -26,9 +26,13 @@ export const createReminderTool: ITool = {
   async execute(input: unknown, userId: string): Promise<ToolResult> {
     const data = input as CreateReminderInput;
 
-    // Fix LLM sometimes forgetting timezone offset by appending +07:00 if missing
+    // Force timezone to +07:00 because LLM often hallucinates Z or +00:00
     let timeStr = data.reminderTime;
-    if (!timeStr.includes('+') && !timeStr.endsWith('Z')) {
+    // Remove trailing Z if exists
+    if (timeStr.endsWith('Z')) timeStr = timeStr.slice(0, -1);
+    // Replace any existing +XX:XX or -XX:XX offset with +07:00
+    timeStr = timeStr.replace(/[+-]\d{2}:\d{2}$/, '');
+    if (!timeStr.includes('+')) {
       timeStr += '+07:00';
     }
 
@@ -128,7 +132,9 @@ export const updateReminderTool: ITool = {
     if (data.message) updateData.message = data.message;
     if (data.reminderTime) {
       let timeStr = data.reminderTime;
-      if (!timeStr.includes('+') && !timeStr.endsWith('Z')) {
+      if (timeStr.endsWith('Z')) timeStr = timeStr.slice(0, -1);
+      timeStr = timeStr.replace(/[+-]\d{2}:\d{2}$/, '');
+      if (!timeStr.includes('+')) {
         timeStr += '+07:00';
       }
       updateData.reminderTime = new Date(timeStr);
