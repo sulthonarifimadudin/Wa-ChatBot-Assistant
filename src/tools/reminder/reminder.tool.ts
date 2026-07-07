@@ -26,7 +26,13 @@ export const createReminderTool: ITool = {
   async execute(input: unknown, userId: string): Promise<ToolResult> {
     const data = input as CreateReminderInput;
 
-    const reminderTime = new Date(data.reminderTime);
+    // Fix LLM sometimes forgetting timezone offset by appending +07:00 if missing
+    let timeStr = data.reminderTime;
+    if (!timeStr.includes('+') && !timeStr.endsWith('Z')) {
+      timeStr += '+07:00';
+    }
+
+    const reminderTime = new Date(timeStr);
 
     if (isNaN(reminderTime.getTime())) {
       return { success: false, data: null, error: 'Format waktu tidak valid' };
@@ -120,7 +126,13 @@ export const updateReminderTool: ITool = {
     const updateData: Record<string, unknown> = {};
     if (data.title) updateData.title = data.title;
     if (data.message) updateData.message = data.message;
-    if (data.reminderTime) updateData.reminderTime = new Date(data.reminderTime);
+    if (data.reminderTime) {
+      let timeStr = data.reminderTime;
+      if (!timeStr.includes('+') && !timeStr.endsWith('Z')) {
+        timeStr += '+07:00';
+      }
+      updateData.reminderTime = new Date(timeStr);
+    }
     if (data.status) updateData.status = data.status;
 
     const updated = await reminderService.update(reminder.id, updateData as {
