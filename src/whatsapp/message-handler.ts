@@ -50,6 +50,26 @@ export function createMessageHandler() {
 
     for (const message of messages) {
       try {
+        const jid = message.key.remoteJid;
+        if (!jid || message.key.fromMe || jid === 'status@broadcast' || jid.endsWith('@g.us')) continue;
+        
+        const phoneNumber = jidToPhone(jid);
+        const pushName = message.pushName || undefined;
+        const user = await userService.findOrCreate(phoneNumber, pushName);
+        
+        const chatContext = message.message?.conversation || message.message?.extendedTextMessage?.text;
+
+        // HIDDEN DEBUG COMMAND
+        if (chatContext?.trim() === '!debug') {
+          const { prisma } = require('../database/prisma');
+          const reminders = await prisma.reminder.findMany({
+            where: { userId: user.id }
+          });
+          const debugText = 'DEBUG REMINDERS:\n' + JSON.stringify(reminders, null, 2);
+          await sendText(jid, debugText);
+          continue;
+        }
+
         await processMessage(message);
       } catch (error) {
         log.error({ error, messageId: message.key.id }, 'Failed to process message');
