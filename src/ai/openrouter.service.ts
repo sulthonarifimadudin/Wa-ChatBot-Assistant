@@ -12,6 +12,7 @@ export interface ChatMessage {
   tool_calls?: ToolCall[];
   tool_call_id?: string;
   name?: string;
+  reasoning_details?: unknown;
 }
 
 export interface ToolCall {
@@ -40,6 +41,7 @@ export interface ChatCompletionResponse {
       role: 'assistant';
       content: string | null;
       tool_calls?: ToolCall[];
+      reasoning_details?: unknown;
     };
     finish_reason: string;
   }>;
@@ -75,8 +77,9 @@ export class OpenRouterService {
     tools?: ToolDefinition[];
     temperature?: number;
     maxTokens?: number;
+    reasoning?: { enabled: boolean };
   }): Promise<ChatCompletionResponse> {
-    const { messages, tools, temperature = 0.7, maxTokens = 2048 } = params;
+    const { messages, tools, temperature = 0.7, maxTokens = 2048, reasoning } = params;
 
     const body: Record<string, unknown> = {
       model: this.model,
@@ -84,6 +87,10 @@ export class OpenRouterService {
       temperature,
       max_tokens: maxTokens,
     };
+
+    if (reasoning) {
+      body.reasoning = reasoning;
+    }
 
     // Only include tools if we have them
     if (tools && tools.length > 0) {

@@ -213,6 +213,7 @@ async function processMessage(message: WAMessage): Promise<void> {
     let response = await openRouterService.chat({
       messages: llmMessages,
       tools,
+      reasoning: { enabled: true }, // Enable reasoning tokens for supported models
     });
 
     let assistantMessage = response.choices[0]?.message;
@@ -234,6 +235,7 @@ async function processMessage(message: WAMessage): Promise<void> {
         role: 'assistant',
         content: assistantMessage.content,
         tool_calls: assistantMessage.tool_calls,
+        reasoning_details: assistantMessage.reasoning_details, // Preserve reasoning state
       });
 
       // Execute all requested tools
@@ -255,6 +257,7 @@ async function processMessage(message: WAMessage): Promise<void> {
       response = await openRouterService.chat({
         messages: llmMessages,
         tools,
+        reasoning: { enabled: true },
       });
 
       assistantMessage = response.choices[0]?.message;
