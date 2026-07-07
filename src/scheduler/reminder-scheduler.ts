@@ -52,11 +52,24 @@ export function startReminderScheduler(): void {
   }
 }
 
+import { prisma } from '../database/prisma';
+
 /**
  * Check for and process due reminders.
  */
 async function checkDueReminders(): Promise<void> {
   try {
+    // DEBUG: Log all pending reminders to see what's in the database
+    const allPending = await prisma.reminder.findMany({ where: { status: 'PENDING' } });
+    log.info(
+      { 
+        now: new Date().toISOString(), 
+        pendingCount: allPending.length,
+        pendingTimes: allPending.map(r => r.reminderTime.toISOString()) 
+      }, 
+      'Scheduler tick'
+    );
+
     const dueReminders = await reminderService.getDueReminders();
 
     if (dueReminders.length === 0) return;
