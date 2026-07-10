@@ -76,6 +76,7 @@ import { listNotesTool } from './notes/notes.tool';
 import { deleteNoteTool } from './notes/notes.tool';
 import { calculatorTool } from './calculator/calculator.tool';
 import { saveMemoryTool } from './memory/memory.tool';
+import { webSearchTool } from './search/search.tool';
 
 export function registerAllTools(): void {
   // Memory
@@ -94,6 +95,9 @@ export function registerAllTools(): void {
 
   // Calculator
   toolRegistry.register(calculatorTool);
+
+  // Search
+  toolRegistry.register(webSearchTool);
 
   log.info({ totalTools: toolRegistry.size }, '✅ All tools registered');
 }
