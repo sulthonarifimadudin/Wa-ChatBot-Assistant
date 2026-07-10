@@ -17,6 +17,9 @@ const envSchema = z.object({
   // Groq AI (For Voice Transcription)
   GROQ_API_KEY: z.string().optional(),
 
+  // Tavily (For Web Search)
+  TAVILY_API_KEY: z.string().optional(),
+
   // Application
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.coerce.number().int().positive().default(3000),
