@@ -1,39 +1,50 @@
+import fs from 'fs';
+import Groq from 'groq-sdk';
+import { env } from '../../config/env';
 import { createLogger } from '../../config/logger';
 import { openRouterService } from '../../ai/openrouter.service';
 
 const log = createLogger('voice-service');
 
-/**
- * Voice Transcription Service
- * Transcribes voice notes to text.
- *
- * Strategy: Uses OpenRouter's Whisper model or falls back to a basic
- * transcription approach. For MVP, we send the audio to the LLM
- * with a transcription request.
- *
- * TODO: Integrate with Groq Whisper API for better quality
- */
 export class VoiceService {
+  private groq: Groq | null = null;
+
+  constructor() {
+    if (env.GROQ_API_KEY) {
+      this.groq = new Groq({ apiKey: env.GROQ_API_KEY });
+      log.info('✅ Groq API initialized for Voice Notes');
+    } else {
+      log.warn('⚠️ GROQ_API_KEY is not set. Voice Note transcription is disabled.');
+    }
+  }
+
   /**
-   * Transcribe audio to text.
-   * For MVP, this returns a placeholder message since free STT APIs
-   * require additional setup. Replace with Groq Whisper when ready.
+   * Transcribe audio to text using Groq Whisper.
    */
   async transcribe(audioPath: string): Promise<string> {
     log.info({ audioPath }, 'Transcribing audio');
 
-    // TODO: Implement actual transcription with Groq Whisper or similar
-    // For now, we acknowledge receipt and explain the limitation
-    try {
-      // Attempt to use OpenRouter with audio description
-      const response = await openRouterService.simpleChat(
-        'Kamu adalah transcriber. User mengirim voice note. Jelaskan bahwa fitur voice note transcription sedang dalam pengembangan.',
-        `User mengirim voice note (file: ${audioPath}). Beritahu bahwa fitur ini akan segera tersedia.`
-      );
+    if (!this.groq) {
+      return 'Voice note diterima. Namun, fitur transkripsi sedang tidak aktif karena API Key belum dipasang. 🎙️🚫';
+    }
 
-      return response || 'Voice note diterima. Fitur transkripsi sedang dalam pengembangan. 🎙️';
-    } catch {
-      return 'Voice note diterima. Fitur transkripsi sedang dalam pengembangan. 🎙️';
+    try {
+      // Use Groq Whisper to transcribe the audio file
+      const transcription = await this.groq.audio.transcriptions.create({
+        file: fs.createReadStream(audioPath),
+        model: 'whisper-large-v3',
+        response_format: 'json',
+        language: 'id', // Force Indonesian for better accuracy
+      });
+
+      if (!transcription.text) {
+        throw new Error('Empty transcription returned');
+      }
+
+      return transcription.text;
+    } catch (error) {
+      log.error({ error }, 'Voice transcription failed');
+      return 'Voice note diterima, namun terjadi kesalahan saat mencoba mendengarkan isinya. 🎙️❌';
     }
   }
 }

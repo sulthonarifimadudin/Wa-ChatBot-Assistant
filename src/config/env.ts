@@ -14,6 +14,9 @@ const envSchema = z.object({
   OPENROUTER_MODEL: z.string().default('qwen/qwen3-235b-a22b:free'),
   OPENROUTER_BASE_URL: z.string().url().default('https://openrouter.ai/api/v1'),
 
+  // Groq AI (For Voice Transcription)
+  GROQ_API_KEY: z.string().optional(),
+
   // Application
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.coerce.number().int().positive().default(3000),
