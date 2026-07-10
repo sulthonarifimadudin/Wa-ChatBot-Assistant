@@ -82,8 +82,9 @@ export async function downloadAndSaveMedia(
       extension = mime.extension(mimeType) || extension;
     }
     
-    // Force .ogg for audio files because some APIs (like Groq) reject .oga
-    if (type === 'audio' && extension === 'oga') {
+    // Force .ogg for all WhatsApp audio files because Groq API expects valid extensions
+    // and WhatsApp always uses Opus in Ogg containers.
+    if (type === 'audio') {
       extension = 'ogg';
     }
 
