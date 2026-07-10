@@ -81,6 +81,11 @@ export async function downloadAndSaveMedia(
     if (mimeType) {
       extension = mime.extension(mimeType) || extension;
     }
+    
+    // Force .ogg for audio files because some APIs (like Groq) reject .oga
+    if (type === 'audio' && extension === 'oga') {
+      extension = 'ogg';
+    }
 
     const fileName = `${timestamp}_${type}.${extension}`;
     const filePath = path.join(dir, fileName);

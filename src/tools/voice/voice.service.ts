@@ -42,9 +42,9 @@ export class VoiceService {
       }
 
       return transcription.text;
-    } catch (error) {
-      log.error({ error }, 'Voice transcription failed');
-      return 'Voice note diterima, namun terjadi kesalahan saat mencoba mendengarkan isinya. 🎙️❌';
+    } catch (error: any) {
+      log.error({ error: error.message || error }, 'Voice transcription failed');
+      return `Voice note diterima, namun terjadi kesalahan saat mencoba mendengarkan isinya: ${error.message || 'Unknown error'}. 🎙️❌`;
     }
   }
 }
