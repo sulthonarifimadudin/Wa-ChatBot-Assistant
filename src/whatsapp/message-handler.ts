@@ -62,12 +62,10 @@ export function createMessageHandler() {
         // HIDDEN DEBUG COMMAND
         if (chatContext?.trim() === '!debug') {
           const { prisma } = require('../database/prisma');
-          const history = await prisma.chatMessage.findMany({
-            where: { userId: user.id },
-            orderBy: { createdAt: 'desc' },
-            take: 3
+          const reminders = await prisma.reminder.findMany({
+            where: { userId: user.id }
           });
-          const debugText = 'DEBUG HISTORY:\n' + JSON.stringify(history.map((h: any) => ({ role: h.role, content: h.content })), null, 2);
+          const debugText = 'DEBUG REMINDERS:\n' + JSON.stringify(reminders, null, 2);
           await sendText(jid, debugText);
           continue;
         }
