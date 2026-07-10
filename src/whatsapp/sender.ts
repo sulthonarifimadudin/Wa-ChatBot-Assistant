@@ -16,8 +16,9 @@ const log = createLogger('wa-sender');
 export async function sendText(jid: string, text: string): Promise<void> {
   try {
     const sock = getWhatsAppSocket();
+    log.info({ jid, textLength: text.length }, 'Attempting to send text message...');
     await sock.sendMessage(jid, { text });
-    log.debug({ jid, textLength: text.length }, 'Text message sent');
+    log.info({ jid }, 'Text message sent successfully');
   } catch (error) {
     log.error({ error, jid }, 'Failed to send text message');
     throw error;

@@ -89,6 +89,15 @@ async function checkDueReminders(): Promise<void> {
         // Send WhatsApp message
         await sendText(jid, message);
 
+        // Save to chat history so AI remembers sending it
+        const { chatService } = require('../services/chat.service');
+        await chatService.saveMessage({
+          userId: reminder.userId,
+          role: 'ASSISTANT',
+          content: message,
+          messageType: 'TEXT',
+        });
+
         // Mark as sent
         await reminderService.markAsSent(reminder.id);
 
