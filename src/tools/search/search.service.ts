@@ -39,7 +39,7 @@ export class SearchService {
         throw new Error(`Tavily API error: ${response.statusText}`);
       }
 
-      const data = await response.json();
+      const data = (await response.json()) as any;
       
       if (data.results && data.results.length > 0) {
         return data.results.map((result: any) => ({
