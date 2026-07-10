@@ -30,6 +30,18 @@ async function main(): Promise<void> {
 
   // ─── 1. Connect to database ───
   await connectDatabase();
+  
+  // ─── 1.5. Fix existing user JIDs ───
+  const { prisma } = require('./database/prisma');
+  const users = await prisma.user.findMany();
+  for (const u of users) {
+    if (!u.whatsappNumber.includes('@')) {
+      const isLid = u.whatsappNumber.length > 14;
+      const jid = u.whatsappNumber + (isLid ? '@lid' : '@s.whatsapp.net');
+      await prisma.user.update({ where: { id: u.id }, data: { whatsappNumber: jid } });
+      log.info(`Migrated user ${u.whatsappNumber} to ${jid}`);
+    }
+  }
 
   // ─── 2. Register all tools ───
   registerAllTools();

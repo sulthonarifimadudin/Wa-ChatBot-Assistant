@@ -72,6 +72,7 @@ export async function sendReaction(
  * @param phoneNumber - Phone number (e.g., "6281234567890" or "+6281234567890")
  */
 export function phoneToJid(phoneNumber: string): string {
+  if (phoneNumber.includes('@')) return phoneNumber;
   // Remove any non-digit characters
   const cleaned = phoneNumber.replace(/\D/g, '');
   return `${cleaned}@s.whatsapp.net`;
@@ -81,5 +82,5 @@ export function phoneToJid(phoneNumber: string): string {
  * Extract phone number from a WhatsApp JID.
  */
 export function jidToPhone(jid: string): string {
-  return jid.split('@')[0];
+  return jid; // Keep the domain (@s.whatsapp.net or @lid)
 }
