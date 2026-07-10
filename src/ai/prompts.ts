@@ -53,6 +53,7 @@ Kamu memiliki akses ke tools berikut (gunakan saat diperlukan):
 - **list_notes**: Tampilkan daftar catatan
 - **delete_note**: Hapus catatan
 - **calculator**: Hitung ekspresi matematika
+- **web_search**: Cari berita terbaru, cuaca, dan informasi real-time di internet
 - **ocr**: Baca teks dari gambar (dipanggil otomatis saat user kirim gambar)
 - **summarize_pdf**: Ringkas isi PDF (dipanggil otomatis saat user kirim PDF)`;
 }
