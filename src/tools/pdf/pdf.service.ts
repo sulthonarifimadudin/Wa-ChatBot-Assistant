@@ -19,12 +19,65 @@ export class PdfService {
     const buffer = fs.readFileSync(pdfPath);
     const data = await pdfParse(buffer);
 
+    let text = data.text;
+
+    // Fallback to OCR if the PDF seems to be a scanned document (less than 50 chars)
+    if (text.trim().length < 50 && data.numpages > 0) {
+      log.info('PDF text is empty, attempting OCR via pdf2pic...');
+      try {
+        const { fromPath } = await import('pdf2pic');
+        const path = await import('path');
+        const { ocrService } = await import('../ocr/ocr.service');
+        
+        const savePath = path.dirname(pdfPath);
+        const baseName = path.basename(pdfPath, '.pdf') + '_ocr';
+        
+        const options = {
+          density: 150,
+          saveFilename: baseName,
+          savePath: savePath,
+          format: "png",
+          width: 1024
+        };
+        
+        const storeAsImage = fromPath(pdfPath, options);
+        // Process up to 3 pages to avoid API rate limits and long wait times
+        const pagesToProcess = Math.min(data.numpages, 3);
+        
+        let ocrCombinedText = '';
+        
+        for (let i = 1; i <= pagesToProcess; i++) {
+          try {
+            const result = await storeAsImage(i);
+            if (result && result.path) {
+              log.info({ page: i, imagePath: result.path }, 'Running OCR on PDF page');
+              const pageText = await ocrService.extractText(result.path);
+              ocrCombinedText += `\n--- Halaman ${i} ---\n${pageText}\n`;
+              
+              // Clean up the temporary image
+              try {
+                fs.unlinkSync(result.path);
+              } catch (e) {}
+            }
+          } catch (pageError) {
+            log.error({ page: i, error: pageError }, 'Failed to process page');
+          }
+        }
+        
+        if (ocrCombinedText.trim().length > 0) {
+          text = ocrCombinedText;
+        }
+      } catch (ocrError) {
+        log.error({ error: ocrError }, 'Failed to run OCR on PDF');
+      }
+    }
+
     log.info(
-      { pdfPath, pages: data.numpages, textLength: data.text.length },
+      { pdfPath, pages: data.numpages, textLength: text.length },
       'PDF text extracted'
     );
 
-    return data.text;
+    return text;
   }
 
   /**

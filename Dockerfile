@@ -31,6 +31,9 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm install --omit=dev
 
+# Install Ghostscript and GraphicsMagick for PDF OCR
+RUN apk add --no-cache ghostscript graphicsmagick
+
 # Copy Prisma schema and generate client
 COPY prisma ./prisma
 RUN npx prisma generate
